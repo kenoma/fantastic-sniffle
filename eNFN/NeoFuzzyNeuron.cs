@@ -235,6 +235,9 @@ namespace eNFN
             public double MeanError { get; set; }
 
             public int EpochUpdated { get; set; }
+
+            public override string ToString() =>
+                $"x: {CoreX:0.000} q: {Q:0.000} Error: {MeanError:g1} Epoch: {EpochUpdated}";
         }
     }
 }
