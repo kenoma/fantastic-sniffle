@@ -7,9 +7,11 @@ namespace eNFN
     {
         private readonly int _inputDimention;
         private readonly double _beta;
-        private readonly NeoFuzzyNeuron[] _layers;
+        public readonly NeoFuzzyNeuron[] _layers;
         private double _globalError;
         private double _globalStd;
+        
+        
 
         public NeoFuzzyNetwork(int inputDimention, double xmin = 0, double xmax = 1, int m = 2, int maxM = 100, double alpha=1e-3, double beta = 1e-2, int ageLimit = 100)
         {
