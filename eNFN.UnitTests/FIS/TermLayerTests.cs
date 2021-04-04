@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using eNFN.FIS;
+using eNFN.FIS.Terms;
 using NUnit.Framework;
 
 namespace eNFN.UnitTests.FIS
@@ -107,7 +108,7 @@ namespace eNFN.UnitTests.FIS
         {
             var zero = TermCore.Create(initialZero);
             var one = TermCore.Create(initialOne);
-            var layers = new TermLayer(new LinearMembershipFunction(), new[]
+            var layers = new TermLayer<LinearMembershipFunction>( new[]
             {
                 zero, one
             }, learningRate: 1e-1);
@@ -127,7 +128,7 @@ namespace eNFN.UnitTests.FIS
         {
             var zero = TermCore.Create(0);
             var one = TermCore.Create(1);
-            var layers = new TermLayer(new LinearMembershipFunction(), new[]
+            var layers = new TermLayer<LinearMembershipFunction>( new[]
             {
                 zero, one
             }, learningRate: 1e-1, smoothingAverageRate: 1e-1);
@@ -151,7 +152,7 @@ namespace eNFN.UnitTests.FIS
             var one = TermCore.Create(1);
             zero.AccumulatedError = 1;
             one.AccumulatedError = 1;
-            var layers = new TermLayer(new LinearMembershipFunction(), new[]
+            var layers = new TermLayer<LinearMembershipFunction>( new[]
             {
                 zero, one
             });
@@ -170,7 +171,7 @@ namespace eNFN.UnitTests.FIS
             var one = TermCore.Create(1);
             zero.AccumulatedError = 1;
             one.AccumulatedError = 1;
-            var layers = new TermLayer(new LinearMembershipFunction(), new[]
+            var layers = new TermLayer<LinearMembershipFunction>(new[]
             {
                 zero, one
             });
@@ -185,7 +186,7 @@ namespace eNFN.UnitTests.FIS
         [TestCase(-1.0)]
         public void CreationStep_InitialInfinities(double input)
         {
-            var layers = new TermLayer(new LinearMembershipFunction());
+            var layers = new TermLayer<LinearMembershipFunction>();
 
             layers.CreationStep(input, 0, 0);
 
@@ -193,6 +194,6 @@ namespace eNFN.UnitTests.FIS
             Assert.IsTrue(layers.Cores.Any(z => Math.Abs(z.X - input) < 1e-5));
         }
 
-        private TermLayer Create() => new(new LinearMembershipFunction(), new[] {_zero, _one, _half});
+        private TermLayer<LinearMembershipFunction> Create() => new(new[] {_zero, _one, _half});
     }
 }

@@ -2,18 +2,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using eNFN.eANFIS;
+using eNFN.FIS.Terms;
 
 namespace eNFN.FIS
 {
-    public class InferenceLayer
+    public class InferenceLayer<T> where T : IMembershipFunction, new()
     {
-        private readonly TermLayer[] _termLayers;
+        private readonly TermLayer<T>[] _termLayers;
         private readonly IRuleset _ruleset;
         private readonly double _smoothingAverageRate;
         private double _generalErrorAverage = 0.0;
         private double _generalErrorStd = 0.0;
 
-        public InferenceLayer(TermLayer[] termLayers, IRuleset ruleset, double smoothingAverageRate=1e-2)
+        public TermLayer<T>[] TermLayers => _termLayers.ToArray();
+        public double GeneralError => _generalErrorAverage;
+
+        public InferenceLayer(TermLayer<T>[] termLayers, IRuleset ruleset, double smoothingAverageRate=1e-2)
         {
             _termLayers = termLayers ?? throw new ArgumentNullException(nameof(termLayers));
             _ruleset = ruleset ?? throw new ArgumentNullException(nameof(ruleset));
@@ -38,13 +42,13 @@ namespace eNFN.FIS
             
             _generalErrorStd = (1 - _smoothingAverageRate) * (_generalErrorStd +
                                                              _smoothingAverageRate * 
-                                                             (_generalErrorAverage - error) *
-                                                             (_generalErrorAverage - error));
-            _generalErrorAverage -= _smoothingAverageRate * (_generalErrorAverage - error);
+                                                             (_generalErrorAverage - Math.Abs(error)) *
+                                                             (_generalErrorAverage - Math.Abs(error)));
+            _generalErrorAverage -= _smoothingAverageRate * (_generalErrorAverage - Math.Abs(error));
             
             for (var layer = 0; layer < _termLayers.Length; layer++)
             {
-                _termLayers[layer].BackpropError(inputX[layer], error);
+                _termLayers[layer].BackpropError(inputX[layer], Math.Abs(error));
                 _termLayers[layer].CreationStep(inputX[layer], _generalErrorAverage, _generalErrorStd);
             }
             

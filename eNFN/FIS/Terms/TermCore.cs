@@ -11,11 +11,10 @@ namespace eNFN.FIS
 
         public double AccumulatedError { get; set; }
         
-        public ulong EpochActivated { get; set; }
+        public double ActivationCompetitionsWin { get; set; }
 
         public static TermCore Create(double x) => new TermCore {X = x};
-
-        public static TermCore Create(double x, ulong epochActivated) =>
-            new TermCore {X = x, EpochActivated = epochActivated};
+        
+        public override string ToString() => $"X: {X:0.0000} Activated: {ActivationCompetitionsWin} Error: {AccumulatedError}";
     }
 }

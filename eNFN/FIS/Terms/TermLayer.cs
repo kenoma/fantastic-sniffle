@@ -1,34 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 
-namespace eNFN.FIS
+namespace eNFN.FIS.Terms
 {
-    public class TermLayer
+    public class TermLayer<T> where T : IMembershipFunction, new()
     {
         private const double Threshold = 1e-20;
-        private readonly IMembershipFunction _membershipFunction;
+        private const double LocalAccuracyThreshold = 1e-8;
+        private readonly T _membershipFunction = new T();
         private readonly double _learningRate;
         private readonly double _smoothingAverageRate;
         private readonly int _termsLimit;
-        private readonly ulong _ageLimit;
+        private readonly double _competitionLooseLimit;
         private readonly List<TermCore> _cores = new List<TermCore>();
-        private ulong _currentEpoch = 0;
 
         internal TermCore[] Cores => _cores.ToArray();
 
-        public TermLayer(IMembershipFunction membershipFunction, TermCore[] initialStructure = null,
+        public TermLayer(TermCore[] initialStructure = null,
             double learningRate = 1e-3,
             double smoothingAverageRate = 1e-2,
             int termsLimit = 100,
-            ulong ageLimit = 1000)
+            double competitionLooseLimit = 100)
         {
-            _membershipFunction = membershipFunction ?? throw new ArgumentNullException(nameof(membershipFunction));
             _learningRate = learningRate;
             _smoothingAverageRate = smoothingAverageRate;
             _termsLimit = termsLimit;
-            _ageLimit = ageLimit;
+            _competitionLooseLimit = competitionLooseLimit;
 
             if (initialStructure == null)
             {
@@ -63,8 +61,6 @@ namespace eNFN.FIS
                     yield break;
                 }
             }
-
-            _currentEpoch++;
         }
 
         public void BackpropError(double inputValue, double error)
@@ -77,26 +73,33 @@ namespace eNFN.FIS
 
                     if (mu > 0.5)
                     {
-                        _cores[t].X -= _learningRate * (_cores[t].X - inputValue);
+                        if (double.IsFinite(_cores[t].X))
+                            _cores[t].X -= _learningRate * (_cores[t].X - inputValue);
                         _cores[t].AccumulatedError -= _smoothingAverageRate * (_cores[t].AccumulatedError - error);
-                        _cores[t].EpochActivated = _currentEpoch;
+                        _cores[t].ActivationCompetitionsWin += mu* _cores[t].AccumulatedError;
+                        _cores[t + 1].ActivationCompetitionsWin -= mu* _cores[t+1].AccumulatedError;
                     }
                     else if (mu < 0.5)
                     {
-                        _cores[t + 1].X -= _learningRate * (_cores[t + 1].X - inputValue);
+                        if (double.IsFinite(_cores[t + 1].X))
+                            _cores[t + 1].X -= _learningRate * (_cores[t + 1].X - inputValue);
+
                         _cores[t + 1].AccumulatedError -=
                             _smoothingAverageRate * (_cores[t + 1].AccumulatedError - error);
-                        _cores[t + 1].EpochActivated = _currentEpoch;
+                        _cores[t + 1].ActivationCompetitionsWin += mu* _cores[t+1].AccumulatedError;
+                        _cores[t].ActivationCompetitionsWin -= mu* _cores[t].AccumulatedError;
                     }
                     else
                     {
-                        _cores[t].X -= _learningRate * (_cores[t].X - inputValue) / 2.0;
+                        if (double.IsFinite(_cores[t].X))
+                            _cores[t].X -= _learningRate * (_cores[t].X - inputValue) / 2.0;
                         _cores[t].AccumulatedError -= _smoothingAverageRate * (_cores[t].AccumulatedError - error);
-                        _cores[t + 1].X -= _learningRate * (_cores[t + 1].X - inputValue) / 2.0;
+                        if (double.IsFinite(_cores[t + 1].X))
+                            _cores[t + 1].X -= _learningRate * (_cores[t + 1].X - inputValue) / 2.0;
                         _cores[t + 1].AccumulatedError -=
                             _smoothingAverageRate * (_cores[t + 1].AccumulatedError - error);
-                        _cores[t].EpochActivated = _currentEpoch;
-                        _cores[t + 1].EpochActivated = _currentEpoch;
+                        _cores[t].ActivationCompetitionsWin += mu * _cores[t].AccumulatedError;
+                        _cores[t + 1].ActivationCompetitionsWin += mu * _cores[t + 1].AccumulatedError;
                     }
 
                     break;
@@ -112,10 +115,14 @@ namespace eNFN.FIS
                 {
                     var mu = _membershipFunction.Mu(inputValue, _cores[t].X, _cores[t + 1].X);
 
-                    if ((mu > 0.5 && (_cores[t].AccumulatedError > generalErrorAverage + generalErrorStd ||
-                                      double.IsInfinity(_cores[t].X))) ||
-                        (mu <= 0.5 && (_cores[t + 1].AccumulatedError > generalErrorAverage + generalErrorStd ||
-                                       double.IsInfinity(_cores[t + 1].X))))
+                    if ((mu > 0.5 && (
+                            _cores[t].AccumulatedError >
+                            generalErrorAverage + generalErrorStd ||
+                            double.IsInfinity(_cores[t + 1].X))) ||
+                        (mu <= 0.5 && (
+                            _cores[t + 1].AccumulatedError >
+                            generalErrorAverage + generalErrorStd ||
+                            double.IsInfinity(_cores[t].X))))
                     {
                         var tau = (_cores.Where(z => double.IsFinite(z.X)).Select(z => z.X).DefaultIfEmpty(0).Max() -
                                    _cores.Where(z => double.IsFinite(z.X)).Select(z => z.X).DefaultIfEmpty(0).Min()) /
@@ -128,11 +135,12 @@ namespace eNFN.FIS
                             ? (2 * inputValue - _cores[t].X)
                             : _cores[t + 1].X;
 
-                        if ((right - left) / 2 > tau)
+                        var tau2 = Math.Min(right - inputValue, inputValue - left);
+
+                        if ((right - left) / 2 > tau && tau2 > tau)
                         {
                             var termValue = (left + right) / 2;
-                            _cores.Add(TermCore.Create(double.IsNaN(termValue) ? inputValue : termValue,
-                                _currentEpoch));
+                            _cores.Add(TermCore.Create(double.IsNaN(termValue) ? inputValue : termValue));
                             _cores.Sort((a, b) => a.X.CompareTo(b.X));
                         }
                     }
@@ -147,9 +155,10 @@ namespace eNFN.FIS
             eliminatedTerm = Guid.Empty;
             var candidate = _cores
                 .Where(z => double.IsFinite(z.X))
-                .OrderBy(z => z.EpochActivated).FirstOrDefault();
+                .OrderBy(z => z.ActivationCompetitionsWin).FirstOrDefault();
 
-            if (candidate == null || _currentEpoch - _ageLimit > candidate.EpochActivated)
+            if (candidate == null || candidate.ActivationCompetitionsWin > 0 ||
+                Math.Abs(candidate.ActivationCompetitionsWin) < _competitionLooseLimit)
                 return false;
 
             eliminatedTerm = candidate.Id;
