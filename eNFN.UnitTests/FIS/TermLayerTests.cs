@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using eNFN.FIS;
+using eNFN.FIS.MembershipFunctions;
 using eNFN.FIS.Terms;
 using NUnit.Framework;
 

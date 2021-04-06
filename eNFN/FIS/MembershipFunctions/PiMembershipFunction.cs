@@ -2,7 +2,7 @@
 
 namespace eNFN.FIS.MembershipFunctions
 {
-    public class LinearMembershipFunction : IMembershipFunction
+    public class PiMembershipFunction : IMembershipFunction
     {
         public double Mu(double x, params double[] param)
         {
@@ -16,14 +16,29 @@ namespace eNFN.FIS.MembershipFunctions
 
             if (double.IsInfinity(b))
                 return 1.0;
-            
+
             if (double.IsInfinity(a))
                 return 0.0;
 
             if ((x > a && x > b) || (x < a && x < b))
                 return 0.0;
 
-            return a < b ? (b - x) / (b - a) : (1.0 - (x - a) / (b - a));
+            if (a < b)
+            {
+                if (x <= (a + b) / 2)
+                    return 2 * Math.Pow((x - a) / (b - a), 2);
+                if (x <= b)
+                    return 1 - 2 * Math.Pow((x - b) / (b - a), 2);
+            }
+            else
+            {
+                if (x <= (a + b) / 2)
+                    return 1 - 2 * Math.Pow((x - b) / (b - a), 2);
+                if (x <= b)
+                    return 2 * Math.Pow((x - a) / (b - a), 2);
+            }
+
+            return 0.0;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using eNFN.eANFIS.Impl;
 using eNFN.FIS;
+using eNFN.FIS.MembershipFunctions;
 using eNFN.FIS.Terms;
 using NUnit.Framework;
 

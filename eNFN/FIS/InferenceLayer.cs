@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using eNFN.eANFIS;
+using eNFN.FIS.MembershipFunctions;
 using eNFN.FIS.Terms;
 
 namespace eNFN.FIS

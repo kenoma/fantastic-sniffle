@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using eNFN.eANFIS.Impl;
 using eNFN.FIS;
+using eNFN.FIS.MembershipFunctions;
 using eNFN.FIS.Terms;
 using NUnit.Framework;
 
@@ -47,11 +48,11 @@ namespace eNFN.UnitTests.FIS
             swPred.WriteLine("r;x;predicted_x");
             var fis = Create();
             
-            for (var r = 1.1; r < 3.88; r += 3e-3)
+            for (var r = 1.1; r < 3.88; r += 5e-3)
             {
                 var px = 0.1;
                 var lx = r * px * (1 - px);
-                for (var i = 0; i < 1000000; i++)
+                for (var i = 0; i < 100000; i++)
                 {
                     px = lx;
                     lx = r * lx * (1 - lx);
@@ -74,17 +75,17 @@ namespace eNFN.UnitTests.FIS
             }
         }
 
-        private InferenceLayer<LinearMembershipFunction> Create()
+        private InferenceLayer<PiMembershipFunction> Create()
         {
-            var lrate = 2e-3;
-            var smoothingAvarageRate = 1e-2;
+            var lrate = 5e-2;
+            var smoothingAvarageRate = 1e-3;
 
             var ruleset = new FirstLevelRuleset(lrate);
 
-            var termLayer = new TermLayer<LinearMembershipFunction>(learningRate: lrate,
+            var termLayer = new TermLayer<PiMembershipFunction>(learningRate: lrate,
                 smoothingAverageRate: smoothingAvarageRate,
-                termsLimit: 100, competitionLooseLimit: 100); //TermCore.Create(0), TermCore.Create(1)
-            var fis = new InferenceLayer<LinearMembershipFunction>(new[] {termLayer}, ruleset, smoothingAvarageRate);
+                termsLimit: 200, competitionLooseLimit: 100); //TermCore.Create(0), TermCore.Create(1)
+            var fis = new InferenceLayer<PiMembershipFunction>(new[] {termLayer}, ruleset, smoothingAvarageRate);
             return fis;
         }
     }

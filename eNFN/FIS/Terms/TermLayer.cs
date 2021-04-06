@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using eNFN.FIS.MembershipFunctions;
 
 namespace eNFN.FIS.Terms
 {
@@ -70,14 +71,18 @@ namespace eNFN.FIS.Terms
                 if (_cores[t].X <= inputValue && inputValue < _cores[t + 1].X)
                 {
                     var mu = _membershipFunction.Mu(inputValue, _cores[t].X, _cores[t + 1].X);
-
+                    
                     if (mu > 0.5)
                     {
                         if (double.IsFinite(_cores[t].X))
                             _cores[t].X -= _learningRate * (_cores[t].X - inputValue);
                         _cores[t].AccumulatedError -= _smoothingAverageRate * (_cores[t].AccumulatedError - error);
-                        _cores[t].ActivationCompetitionsWin += mu* _cores[t].AccumulatedError;
-                        _cores[t + 1].ActivationCompetitionsWin -= mu* _cores[t+1].AccumulatedError;
+                        _cores[t].ActivationCompetitionsFailedInARow = 0;
+                        _cores[t + 1].ActivationCompetitionsFailedInARow += 1;
+                        if (mu > 0.99999 && t>0)
+                        {
+                            _cores[t-1].ActivationCompetitionsFailedInARow += 1;
+                        }
                     }
                     else if (mu < 0.5)
                     {
@@ -86,8 +91,8 @@ namespace eNFN.FIS.Terms
 
                         _cores[t + 1].AccumulatedError -=
                             _smoothingAverageRate * (_cores[t + 1].AccumulatedError - error);
-                        _cores[t + 1].ActivationCompetitionsWin += mu* _cores[t+1].AccumulatedError;
-                        _cores[t].ActivationCompetitionsWin -= mu* _cores[t].AccumulatedError;
+                        _cores[t + 1].ActivationCompetitionsFailedInARow = 0;
+                        _cores[t].ActivationCompetitionsFailedInARow += 1;
                     }
                     else
                     {
@@ -98,8 +103,8 @@ namespace eNFN.FIS.Terms
                             _cores[t + 1].X -= _learningRate * (_cores[t + 1].X - inputValue) / 2.0;
                         _cores[t + 1].AccumulatedError -=
                             _smoothingAverageRate * (_cores[t + 1].AccumulatedError - error);
-                        _cores[t].ActivationCompetitionsWin += mu * _cores[t].AccumulatedError;
-                        _cores[t + 1].ActivationCompetitionsWin += mu * _cores[t + 1].AccumulatedError;
+                        _cores[t].ActivationCompetitionsFailedInARow += 0.5;
+                        _cores[t + 1].ActivationCompetitionsFailedInARow += 0.5;
                     }
 
                     break;
@@ -155,10 +160,9 @@ namespace eNFN.FIS.Terms
             eliminatedTerm = Guid.Empty;
             var candidate = _cores
                 .Where(z => double.IsFinite(z.X))
-                .OrderBy(z => z.ActivationCompetitionsWin).FirstOrDefault();
+                .OrderByDescending(z => z.ActivationCompetitionsFailedInARow).FirstOrDefault();
 
-            if (candidate == null || candidate.ActivationCompetitionsWin > 0 ||
-                Math.Abs(candidate.ActivationCompetitionsWin) < _competitionLooseLimit)
+            if (candidate == null || candidate.ActivationCompetitionsFailedInARow < _competitionLooseLimit)
                 return false;
 
             eliminatedTerm = candidate.Id;

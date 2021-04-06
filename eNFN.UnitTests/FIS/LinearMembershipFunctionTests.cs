@@ -1,5 +1,6 @@
 ﻿using System;
 using eNFN.FIS;
+using eNFN.FIS.MembershipFunctions;
 using NUnit.Framework;
 
 namespace eNFN.UnitTests.FIS

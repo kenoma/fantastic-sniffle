@@ -1,4 +1,4 @@
-﻿namespace eNFN.FIS
+﻿namespace eNFN.FIS.MembershipFunctions
 {
     public interface IMembershipFunction
     {
