@@ -161,7 +161,7 @@ namespace eNFN.UnitTests.FIS
             layers.CreationStep(input, 0, 0);
 
             Assert.AreEqual(5, layers.Cores.Length);
-            Assert.AreEqual(0.5, layers.Cores[2].X);
+            Assert.AreEqual(input, layers.Cores[2].X);
         }
 
         [TestCase(2.0)]
