@@ -13,8 +13,16 @@ namespace eNFN.FIS
         
         public double ActivationCompetitionsFailedInARow { get; set; }
 
-        public static TermCore Create(double x) => new TermCore {X = x};
-        
-        public override string ToString() => $"X: {X:0.0000} Failed competitions: {ActivationCompetitionsFailedInARow} Error: {AccumulatedError}";
+        //public double InitialError { get; set; }
+
+        //public double ErrorRate => AccumulatedError / InitialError;
+
+        // public static TermCore Create(double x, double initialError) =>
+        //     new() {X = x, InitialError = initialError};
+
+        public static TermCore Create(double x) => new() {X = x};
+
+        public override string ToString() =>
+            $"X: {X:0.0000} Failed competitions: {ActivationCompetitionsFailedInARow} Error: {AccumulatedError}";
     }
 }

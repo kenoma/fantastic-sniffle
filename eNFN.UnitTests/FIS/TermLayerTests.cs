@@ -109,7 +109,7 @@ namespace eNFN.UnitTests.FIS
         {
             var zero = TermCore.Create(initialZero);
             var one = TermCore.Create(initialOne);
-            var layers = new TermLayer<LinearMembershipFunction>( new[]
+            var layers = new TermLayer<LinearMembershipFunction>(new[]
             {
                 zero, one
             }, learningRate: 1e-1);
@@ -123,13 +123,13 @@ namespace eNFN.UnitTests.FIS
             Assert.AreEqual(0, zero.X, 1e-2);
             Assert.AreEqual(1, one.X, 1e-2);
         }
-        
+
         [Test]
         public void BackpropError_AccumulatedErrorComputedCorrectly()
         {
             var zero = TermCore.Create(0);
             var one = TermCore.Create(1);
-            var layers = new TermLayer<LinearMembershipFunction>( new[]
+            var layers = new TermLayer<LinearMembershipFunction>(new[]
             {
                 zero, one
             }, learningRate: 1e-1, smoothingAverageRate: 1e-1);
@@ -153,7 +153,7 @@ namespace eNFN.UnitTests.FIS
             var one = TermCore.Create(1);
             zero.AccumulatedError = 1;
             one.AccumulatedError = 1;
-            var layers = new TermLayer<LinearMembershipFunction>( new[]
+            var layers = new TermLayer<LinearMembershipFunction>(new[]
             {
                 zero, one
             });
@@ -163,7 +163,7 @@ namespace eNFN.UnitTests.FIS
             Assert.AreEqual(5, layers.Cores.Length);
             Assert.AreEqual(0.5, layers.Cores[2].X);
         }
-        
+
         [TestCase(2.0)]
         [TestCase(-1.0)]
         public void CreationStep_CorrectlyOutsideTerm(double input)
@@ -182,7 +182,7 @@ namespace eNFN.UnitTests.FIS
             Assert.AreEqual(5, layers.Cores.Length);
             Assert.IsTrue(layers.Cores.Any(z => Math.Abs(z.X - input) < 1e-5));
         }
-        
+
         [TestCase(2.0)]
         [TestCase(-1.0)]
         public void CreationStep_InitialInfinities(double input)

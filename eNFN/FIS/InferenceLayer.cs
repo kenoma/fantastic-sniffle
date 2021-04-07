@@ -18,14 +18,14 @@ namespace eNFN.FIS
         public TermLayer<T>[] TermLayers => _termLayers.ToArray();
         public double GeneralError => _generalErrorAverage;
 
-        public InferenceLayer(TermLayer<T>[] termLayers, IRuleset ruleset, double smoothingAverageRate=1e-2)
+        public InferenceLayer(TermLayer<T>[] termLayers, IRuleset ruleset, double smoothingAverageRate = 1e-2)
         {
             _termLayers = termLayers ?? throw new ArgumentNullException(nameof(termLayers));
             _ruleset = ruleset ?? throw new ArgumentNullException(nameof(ruleset));
             _smoothingAverageRate = smoothingAverageRate;
         }
 
-        public double Inference(IReadOnlyList<double> inputX, double expected)
+        public double Inference(IReadOnlyList<double> inputX, double? expectedValue = null)
         {
             if (inputX?.Count != _termLayers.Length)
                 throw new ArgumentNullException(nameof(inputX));
@@ -35,32 +35,36 @@ namespace eNFN.FIS
             var retval = RecursiveComputeOutput(inputX, new Guid[inputX.Count], new double[inputX.Count], 1.0, 0,
                 learningData);
 
-            var error = expected - retval;
+            if (!expectedValue.HasValue)
+                return retval;
+
+            var error = expectedValue.Value - retval;
             foreach (var (termsCombo, generalFiring) in learningData)
             {
                 _ruleset.BackpropError(inputX, termsCombo, error, generalFiring);
             }
-            
+
             _generalErrorStd = (1 - _smoothingAverageRate) * (_generalErrorStd +
-                                                             _smoothingAverageRate * 
-                                                             (_generalErrorAverage - Math.Abs(error)) *
-                                                             (_generalErrorAverage - Math.Abs(error)));
+                                                              _smoothingAverageRate *
+                                                              (_generalErrorAverage - Math.Abs(error)) *
+                                                              (_generalErrorAverage - Math.Abs(error)));
             _generalErrorAverage -= _smoothingAverageRate * (_generalErrorAverage - Math.Abs(error));
-            
+
             for (var layer = 0; layer < _termLayers.Length; layer++)
             {
                 _termLayers[layer].BackpropError(inputX[layer], Math.Abs(error));
                 _termLayers[layer].CreationStep(inputX[layer], _generalErrorAverage, _generalErrorStd);
             }
-            
+
             for (var layer = 0; layer < _termLayers.Length; layer++)
             {
-                if (_termLayers[layer].TryEliminateTerm(out var eliminatingTerm))
+                if (_termLayers[layer]
+                    .TryEliminateTerm(out var eliminatingTerm, _generalErrorAverage, _generalErrorStd))
                 {
                     _ruleset.EliminateRules(layer, eliminatingTerm);
                 }
             }
-            
+
             return retval;
         }
 

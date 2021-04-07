@@ -32,7 +32,7 @@ namespace eNFN.eANFIS.Impl
 
         public void BackpropError(IReadOnlyList<double> _, IReadOnlyList<Guid> termIds, double error, double firingLevel)
         {
-            _rules[termIds] -= -_learningRate * error * firingLevel;
+            _rules[termIds] = _rules[termIds] + _learningRate * error * firingLevel;
         }
 
         public void EliminateRules(int layer, Guid eliminatingTerm)

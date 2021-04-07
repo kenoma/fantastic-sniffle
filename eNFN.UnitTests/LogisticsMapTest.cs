@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Xml;
 using NUnit.Framework;
 
@@ -12,13 +13,14 @@ namespace eNFN.UnitTests
         [Test]
         public void LogisticsMapCase()
         {
-            _enfn = new NeoFuzzyNetwork(1, xmin: 0, xmax: 1, m: 2, maxM: 100, alpha: 1e-2, beta: 1e-2, ageLimit: 10000);
+            _enfn = new NeoFuzzyNetwork(1, xmin: 0, xmax: 1, m: 2, maxM: 200, alpha: 1e-2, beta: 1e-2, ageLimit: 100);
             var px = 0.1;
-            const double r = 3.8;
+            const double r = 3.580999999999727; //3.8;
             var lx = r * px * (1 - px);
 
             var error = 0.0;
-            for (var i = 0; i < 100000; i++)
+            const double iters = 10000;
+            for (var i = 0; i < iters; i++)
             {
                 px = lx;
                 lx = r * lx * (1 - lx);
@@ -26,42 +28,53 @@ namespace eNFN.UnitTests
                 error += Math.Abs(lx - predicted);
             }
 
-            Assert.Less(error / 100000, 1.0);
+            Assert.Less(error / iters, 1.0);
         }
         
-        [Test]
+        [Test, Explicit]
         public void LogisticsMapCaseDataset()
         {
-            _enfn = new NeoFuzzyNetwork(1, xmin: 0, xmax: 1, m: 2, maxM: 100, alpha: 1e-2, beta: 1e-2, ageLimit: 10000);
-            var px = 0.1;
-            var error = 0.0;
+            var sbStruct = new StringBuilder();
+            var sbError = new StringBuilder();
+            var sbPred = new StringBuilder();
+            sbStruct.AppendLine("r;c_x");
+            sbError.AppendLine("r;err;count");
+            sbPred.AppendLine("r;x;predicted_x");
             
-            using(var fs = File.OpenWrite("F:\\trash\\ocr\\dataset_struct.csv"))
-            using (var sw = new StreamWriter(fs))
+            var fis = new NeoFuzzyNetwork(1, xmin: 0, xmax: 1, m: 2, maxM: 200, alpha: 1e-2, beta: 1e-2, ageLimit: 100);
+            
+            for (var r = 1.1; r < 3.88; r += 1e-3)
             {
-                sw.WriteLine("r;c_x");
-
-                for (var r = 1.0; r < 3.8; r+=1e-2)
+                var px = 0.1;
+                var lx = r * px * (1 - px);
+                for (var i = 0; i < 100000; i++)
                 {
+                    px = lx;
+                    lx = r * lx * (1 - lx);
+                    fis.InferenceWithLearning(new[] {px}, lx);
+                }
 
-                    var lx = r * px * (1 - px);
+                for (var i = 0; i < 80; i++)
+                {
+                    px = lx;
+                    lx = r * lx * (1 - lx);
+                    var pred = fis.Inference(new[] {px});
+                    sbPred.AppendLine($"{r};{lx};{pred}");
+                }
 
-                    for (var i = 0; i < 100000; i++)
-                    {
-                        px = lx;
-                        lx = r * lx * (1 - lx);
-                        var predicted = _enfn.InferenceWithLearning(new[] {px}, lx);
-                        error += Math.Abs(lx - predicted);
-                    }
-
-                    foreach (var core in _enfn._layers[0].B)
-                    {
-                        sw.WriteLine($"{r};{core}");
-                    }
+                sbError.AppendLine($"{r};{Math.Abs(fis.GeneralError)};{fis._layers[0].Size}");
+                foreach (var core in fis._layers[0].B)
+                {
+                    sbStruct.AppendLine($"{r};{core}\r\n");
                 }
             }
 
-            Assert.Less(error / 100000, 1.0);
+            File.WriteAllText("silva_logistic_map_1d_fis.csv",
+                sbStruct.ToString());
+            File.WriteAllText("silva_logistic_map_1d_fis_error.csv",
+                sbError.ToString());
+            File.WriteAllText("silva_logistic_map_1d_fis_pred.csv",
+                sbPred.ToString());
         }
         
         [Test]
