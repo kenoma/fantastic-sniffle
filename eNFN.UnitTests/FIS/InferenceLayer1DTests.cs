@@ -88,17 +88,17 @@ namespace eNFN.UnitTests.FIS
                 sbPred.ToString());
         }
 
-        private InferenceLayer<LinearMembershipFunction> Create()
+        private InferenceLayer<PiMembershipFunction> Create()
         {
             var lrate = 1e-3;
             var smoothingAvarageRate = 1e-3;
 
             var ruleset = new FirstLevelRuleset(2e-1);
 
-            var termLayer = new TermLayer<LinearMembershipFunction>(learningRate: lrate,
+            var termLayer = new TermLayer<PiMembershipFunction>(learningRate: lrate,
                 smoothingAverageRate: smoothingAvarageRate,
                 termsLimit: 200, competitionLooseLimit: 100); //TermCore.Create(0), TermCore.Create(1)
-            var fis = new InferenceLayer<LinearMembershipFunction>(new[] {termLayer}, ruleset, smoothingAvarageRate);
+            var fis = new InferenceLayer<PiMembershipFunction>(new[] {termLayer}, ruleset, smoothingAvarageRate);
             return fis;
         }
     }

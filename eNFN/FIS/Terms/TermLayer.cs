@@ -75,7 +75,7 @@ namespace eNFN.FIS.Terms
                 if (_cores[t].X <= inputValue && inputValue < _cores[t + 1].X)
                 {
                     var mu = _membershipFunction.Mu(inputValue, _cores[t].X, _cores[t + 1].X);
-
+                    error *= mu;
                     if (mu > 0.5)
                     {
                         if (double.IsFinite(_cores[t].X))

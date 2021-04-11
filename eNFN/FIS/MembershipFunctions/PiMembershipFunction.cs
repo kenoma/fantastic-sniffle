@@ -26,16 +26,16 @@ namespace eNFN.FIS.MembershipFunctions
             if (a < b)
             {
                 if (x <= (a + b) / 2)
-                    return 2 * Math.Pow((x - a) / (b - a), 2);
+                    return 1 - 2 * Math.Pow((x - a) / (b - a), 2);
                 if (x <= b)
-                    return 1 - 2 * Math.Pow((x - b) / (b - a), 2);
+                    return 2 * Math.Pow((x - b) / (b - a), 2);
             }
             else
             {
                 if (x <= (a + b) / 2)
-                    return 1 - 2 * Math.Pow((x - b) / (b - a), 2);
-                if (x <= b)
-                    return 2 * Math.Pow((x - a) / (b - a), 2);
+                    return 2 * Math.Pow((x - b) / (b - a), 2);
+                if (x <= a)
+                    return 1 - 2 * Math.Pow((x - a) / (b - a), 2);
             }
 
             return 0.0;

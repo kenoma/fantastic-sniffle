@@ -17,4 +17,10 @@
       <ProjectReference Include="..\eNFN\eNFN.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="FIS\mackey_glass.csv">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
