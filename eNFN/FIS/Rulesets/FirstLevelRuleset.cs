@@ -16,7 +16,7 @@ namespace eNFN.eANFIS.Impl
             _learningRate = learningRate;
         }
 
-        public double GetInferenceForRule(IReadOnlyList<double> inputX, IReadOnlyList<Guid> ruleCode)
+        public double GetInferenceForRule(IReadOnlyList<double> inputX, IReadOnlyList<Guid> ruleCode, double? expected)
         {
             if (ruleCode == null)
                 throw new ArgumentNullException(nameof(ruleCode));
@@ -26,8 +26,8 @@ namespace eNFN.eANFIS.Impl
                 return retval;
             }
 
-            _rules.Add(ruleCode, 0);
-            return 0;
+            _rules.Add(ruleCode, expected ?? 0);
+            return expected ?? 0;
         }
 
         public void BackpropError(IReadOnlyList<double> _, IReadOnlyList<Guid> termIds, double error, double firingLevel)

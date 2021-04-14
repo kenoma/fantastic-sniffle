@@ -33,7 +33,7 @@ namespace eNFN.FIS
             var learningData =
                 new List<(IReadOnlyList<Guid> TermsCombo, double Firing)>();
             var retval = RecursiveComputeOutput(inputX, new Guid[inputX.Count], new double[inputX.Count], 1.0, 0,
-                learningData);
+                learningData, expectedValue);
 
             if (!expectedValue.HasValue)
                 return retval;
@@ -74,11 +74,12 @@ namespace eNFN.FIS
             IReadOnlyList<double> firings,
             double generalFiring,
             int depth,
-            ICollection<(IReadOnlyList<Guid> TermsCombo, double GeneralFiring)> learningData)
+            ICollection<(IReadOnlyList<Guid> TermsCombo, double GeneralFiring)> learningData,
+            double? expectedValue)
         {
             if (depth == input.Count)
             {
-                var inferenceForRule = _ruleset.GetInferenceForRule(input, termsCombo);
+                var inferenceForRule = _ruleset.GetInferenceForRule(input, termsCombo, expectedValue);
                 learningData.Add((termsCombo, generalFiring));
 
                 return generalFiring * inferenceForRule;
@@ -99,7 +100,7 @@ namespace eNFN.FIS
                 tmpTermCombo[depth] = termId;
                 tmpFirings[depth] = firingLevel;
                 sum += RecursiveComputeOutput(input, tmpTermCombo, tmpFirings, generalFiring * firingLevel, depth + 1,
-                    learningData);
+                    learningData, expectedValue);
             }
 
             return sum;
